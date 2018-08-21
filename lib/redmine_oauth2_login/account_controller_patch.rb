@@ -81,7 +81,7 @@ module AccountControllerPatch
       else
         # Access token
         code = params[:code]
-        connection = Faraday::Connection.new oauth2_settings["access_token_uri"].gsub(/\/+$/, '')#, :ssl => {:verify => false} # comment :ssl part is your certificate is OK
+        connection = Faraday::Connection.new #oauth2_settings["access_token_uri"].gsub(/\/+$/, '')#, :ssl => {:verify => false} # comment :ssl part is your certificate is OK
         response = connection.post do |req|
           req.url oauth2_settings["access_token_uri"].gsub(/\/+$/, '')
           req.params["grant_type"] = "authorization_code"
