@@ -233,5 +233,10 @@ module AccountControllerPatch
     def oauth2_settings
       Setting.plugin_redmine_oauth2_login
     end
+    
+    private
+    def oauth2_login_callback_url(args)
+      return request.base_url + "/oauth2/login/callback/" + args[:provider]
+    end
   end
 end
