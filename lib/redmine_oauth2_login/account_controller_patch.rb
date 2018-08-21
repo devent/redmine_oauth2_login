@@ -21,7 +21,7 @@ module AccountControllerPatch
         end
       end
       if replaceRedmineLogin
-        redirect_to :controller => "account", :action => "oauth2_login", :provider => oauth2_settings["provider"], :origin => back_url
+        redirect_to :controller => "account", :action => "oauth2_login", :provider => oauth2_settings["provider"], :origin => back_url and return
       else
         login_without_oauth2
       end
@@ -30,7 +30,7 @@ module AccountControllerPatch
     def logout_with_oauth2
       if oauth2_settings["enabled"]
         logout_user
-        redirect_to oauth2_settings["user_logout_uri"].gsub(/\/+$/, '')+"?targetUrl="+home_url
+        redirect_to oauth2_settings["user_logout_uri"].gsub(/\/+$/, '')+"?targetUrl="+home_url and return
       else
         logout_without_oauth2
       end
@@ -55,7 +55,7 @@ module AccountControllerPatch
           param_arr << "#{key}=#{val}"
         end
         params_str = param_arr.join("&")
-        redirect_to oauth2_settings["authorization_uri"].gsub(/\/+$/, '') + "?#{params_str}"
+        redirect_to oauth2_settings["authorization_uri"].gsub(/\/+$/, '') + "?#{params_str}" and return
       else
         password_authentication
       end
@@ -69,7 +69,7 @@ module AccountControllerPatch
         return false
       else
         flash[:error] = l(error.to_sym)
-        redirect_to adminsignin_path
+        redirect_to adminsignin_path and return
       end
     end
 
@@ -77,7 +77,7 @@ module AccountControllerPatch
     def oauth2_login_callback
       if params[:error]
         flash[:error] = l(:notice_access_denied)
-        redirect_to adminsignin_path
+        redirect_to adminsignin_path and return
       else
         # Access token
         code = params[:code]
@@ -98,7 +98,7 @@ module AccountControllerPatch
         if token.blank?
           # logger.info("#{oauth2_settings['access_token_uri']} return #{response.body}")
           flash[:error] = l(:notice_unable_to_obtain_oauth2_access_token)
-          redirect_to adminsignin_path
+          redirect_to adminsignin_path and return
         end
         userInfoUri = oauth2_settings["user_info_uri"].gsub(/\/+$/, '') + "?access_token=#{token}"
         response = connection.get do |req|
@@ -114,7 +114,7 @@ module AccountControllerPatch
         else
           # logger.info("#{userInfoUri} return #{response.body}")
           flash[:error] = l(:notice_unable_to_obtain_oauth2_credentials)
-          redirect_to adminsignin_path
+          redirect_to adminsignin_path and return
         end
         #end provider=>github
       end
@@ -124,7 +124,7 @@ module AccountControllerPatch
     def extract_user_details(userDetails)
       username = oauth2_username userDetails
       if username.blank?
-        redirect_to adminsignin_path
+        redirect_to adminsignin_path and return
         return
       end
       params[:back_url] = session[:back_url]
@@ -143,7 +143,7 @@ module AccountControllerPatch
           exist_user user
         else 
           flash[:error] = l(:notice_user_access_denied)
-          redirect_to adminsignin_path
+          redirect_to adminsignin_path and return
         end
       end
     end
@@ -178,10 +178,10 @@ module AccountControllerPatch
       if user.save
         self.logged_user = user
         flash[:notice] = l(:notice_account_activated)
-        redirect_to my_account_path
+        redirect_to my_account_path and return
       else
         flash[:error] = l(:notice_oauth_account_denied)
-        redirect_to adminsignin_path
+        redirect_to adminsignin_path and return
       end
     end
 
