@@ -46,7 +46,7 @@ module AccountControllerPatch
     def oauth2_login
       if oauth2_settings["enabled"]
         session[:back_url] = params[:back_url]
-        redirect_uri = oauth2_login_callback_url(:provider => params[:provider])
+        redirect_uri = oauth2_login_callback_url_1(:provider => params[:provider])
         hash = {:response_type => "code",
                 :client_id => oauth2_settings["client_id"],
                 :redirect_uri => redirect_uri}
@@ -88,7 +88,7 @@ module AccountControllerPatch
           req.params["client_id"] = oauth2_settings["client_id"]
           req.params["client_secret"] = oauth2_settings["client_secret"]
           req.params["code"] = code
-          req.params["redirect_uri"] = oauth2_login_callback_url(:provider => params[:provider])
+          req.params["redirect_uri"] = oauth2_login_callback_url_1(:provider => params[:provider])
         end
         if "github".casecmp(params[:provider]) == 0
           token = CGI.parse(response.body)['access_token'][0].to_s
@@ -235,8 +235,8 @@ module AccountControllerPatch
     end
     
     private
-    def oauth2_login_callback_url(args)
-      return request.base_url + "/oauth2/login/callback/" + args[:provider]
+    def oauth2_login_callback_url_1(args)
+      return "https://project.anrisoftware.com" + "/oauth2/login/callback/" + args[:provider]
     end
   end
 end
