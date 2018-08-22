@@ -91,12 +91,12 @@ module AccountControllerPatch
           req.params["code"] = code
           req.params["redirect_uri"] = oauth2_login_callback_url_1(:provider => params[:provider])
         end
+        flash[:error] = "Response: " + response
         if "github".casecmp(params[:provider]) == 0
           token = CGI.parse(response.body)['access_token'][0].to_s
         else # oauth2
           token = JSON.parse(response.body)['access_token']
         end
-        flash[:error] = "Token: " + token
         if token.blank?
           # logger.info("#{oauth2_settings['access_token_uri']} return #{response.body}")
           flash[:error] = l(:notice_unable_to_obtain_oauth2_access_token)
