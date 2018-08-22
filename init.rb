@@ -15,6 +15,7 @@ Redmine::Plugin.register :redmine_oauth2_login do
     :client_id => "",
     :client_secret => "",
     :provider => "github",
+    :redmine_uri => home_url,
     :access_token_uri => "https://github.com/login/oauth/access_token",
     :authorization_uri => "https://github.com/login/oauth/authorize",
     :user_info_uri => "https://api.github.com/user",

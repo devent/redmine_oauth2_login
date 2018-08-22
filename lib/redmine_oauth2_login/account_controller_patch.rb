@@ -11,7 +11,8 @@ module AccountControllerPatch
   module InstanceMethods
 
     def login_with_oauth2
-      if request.get? && oauth2_is_enabled && oauth2_is_replace_redmine_login
+      wrapper = RedmineOauth2Login::Oauth2Wrapper.new(oauth2_settings)
+      if request.get? && wrapper.is_enabled && wrapper.is_replace_redmine_login
         if params.has_key?("admin")
           replaceRedmineLogin = "false".casecmp(params[:admin]) == 0
         elsif session[:using_redmine_login]
@@ -21,14 +22,15 @@ module AccountControllerPatch
         end
       end
       if replaceRedmineLogin
-        redirect_to :controller => "account", :action => "oauth2_login", :provider => oauth2_get_provider, :origin => back_url and return
+        redirect_to :controller => "account", :action => "oauth2_login", :provider => wrapper.provider, :origin => back_url and return
       else
         login_without_oauth2
       end
     end
 
     def logout_with_oauth2
-      if oauth2_settings["enabled"]
+      wrapper = RedmineOauth2Login::Oauth2Wrapper.new(oauth2_settings)
+      if wrapper.is_enabled
         logout_user
         redirect_to oauth2_get_user_logout_uri + "?targetUrl=" + home_url and return
       else
@@ -44,27 +46,20 @@ module AccountControllerPatch
 
     # login
     def oauth2_login
-      if oauth2_settings["enabled"]
+      wrapper = RedmineOauth2Login::Oauth2Wrapper.new(oauth2_settings)
+      if wrapper.is_enabled
         session[:back_url] = params[:back_url]
-        redirect_uri = oauth2_login_callback_url_1(:provider => params[:provider])
-        hash = {:response_type => "code",
-                :client_id => oauth2_get_client_id,
-                :redirect_uri => redirect_uri}
-        param_arr = []
-        hash.each do |key , val|
-          param_arr << "#{key}=#{val}"
-        end
-        params_str = param_arr.join("&")
-        redirect_to oauth2_get_authorization_uri + "?#{params_str}" and return
+        redirect_to wrapper.login_redirect and return
       else
         password_authentication
       end
     end
 
     def oauth2_login_failure
+      wrapper = RedmineOauth2Login::Oauth2Wrapper.new(oauth2_settings)
       error = params[:message] || 'unknown'
       error = 'error_oauth2_login_' + error
-      if oauth2_is_replace_redmine_login
+      if wrapper.is_replace_redmine_login
         render_error({:message => error.to_sym, :status => 500})
         return false
       else
@@ -79,41 +74,16 @@ module AccountControllerPatch
         flash[:error] = l(:notice_access_denied)
         redirect_to adminsignin_path and return
       else
+        wrapper = RedmineOauth2Login::Oauth2Wrapper.new(oauth2_settings)
         # Access token
         code = params[:code]
-        puts "Code: " + code
-        conn = Faraday.new(:url => oauth2_get_access_token_uri) do |faraday|
-          faraday.request :url_encoded
-          faraday.adapter Faraday.default_adapter
-        end
-        data = {
-          :grant_type => "authorization_code",
-          :client_id => oauth2_get_client_id,
-          :client_secret => oauth2_get_client_secret,
-          :code => code,
-          :redirect_uri => oauth2_login_callback_url_1(:provider => params[:provider])
-        }
-        response = conn.post do |req|
-          req.headers['Content-Type'] = 'application/x-www-form-urlencoded'
-          req.body = URI.encode_www_form(data)
-        end
-        if "github".casecmp(params[:provider]) == 0
-          token = CGI.parse(response.body)['access_token'][0].to_s
-        else # oauth2
-          token = JSON.parse(response.body)['access_token']
-        end
+        token = wrapper.token(code)
         if token.blank?
           # logger.info("#{oauth2_settings['access_token_uri']} return #{response.body}")
           flash[:error] = l(:notice_unable_to_obtain_oauth2_access_token)
           redirect_to adminsignin_path and return
         end
-        response = conn.get do |req|
-          req.headers['Content-Type'] = 'application/json'
-          req.headers['Authorization'] = "Bearer " + token
-          req.url oauth2_get_user_info_uri
-        end
-        # Profile parse
-        userDetails = JSON.parse(response.body)
+        profile = wrapper.profile(token)
 
         # if "github".casecmp(params[:provider]) == 0
         # Login
@@ -194,102 +164,9 @@ module AccountControllerPatch
     end
     
     private
-    def oauth2_is_enabled()
-      return oauth2_settings["enabled"].gsub(/\/+$/, '')
-    end
-
-    private
-    def oauth2_is_replace_redmine_login()
-      return oauth2_settings["replace_redmine_login"]
-    end
-
-    private
-    def oauth2_get_provider()
-      return oauth2_settings["provider"]
-    end
-
-    private
-    def oauth2_get_client_id()
-      return oauth2_settings["client_id"]
-    end
-
-    private
-    def oauth2_get_client_secret()
-      return oauth2_settings["client_secret"]
-    end
-
-    private
-    def oauth2_get_access_token_uri()
-      return oauth2_settings["access_token_uri"].gsub(/\/+$/, '')
-    end
-
-    private
-    def oauth2_get_authorization_uri()
-      return oauth2_settings["authorization_uri"].gsub(/\/+$/, '')
-    end
-
-    private
-    def oauth2_get_user_logout_uri()
-      return oauth2_settings["user_logout_uri"].gsub(/\/+$/, '')
-    end
-
-    private
-    def oauth2_get_user_info_uri()
-      return oauth2_settings["user_info_uri"].gsub(/\/+$/, '')
-    end
-
-    private
-    def oauth2_username(userDetails)
-      for key in ["preferred_username", "username", "login", "user", "name"] do
-        if userDetails[key].present?
-          return userDetails[key]
-        end
-      end
-    end
-
-    private
-    def oauth2_firstname(userDetails)
-      for key in ["given_name", "firstname", "fullname", "name", "username", "login", "user"] do
-        if userDetails[key].present?
-          return userDetails[key]
-        end
-      end
-      return oauth2_username(userDetails)
-    end
-
-    private
-    def oauth2_lastname(userDetails)
-      for key in ["family_name", "lastname"] do
-        if userDetails[key].present?
-          return userDetails[key]
-        end
-      end
-      return "OAuth2User"
-    end
-
-    private
-    def oauth2_email(userDetails)
-      for key in ["email"] do
-        if userDetails[key].present?
-          return userDetails[key]
-        end
-      end
-      return oauth2_username(userDetails) + "@email.error"
-    end
-
-    private
-    def oauth2_callback_url(provider)
-      return oauth2_login_url.gsub(/\/+$/, '') + "/callback/" + provider
-    end
-
-    private
     def oauth2_settings
       Setting.plugin_redmine_oauth2_login
     end
     
-    private
-    def oauth2_login_callback_url_1(args)
-      return "https://project.anrisoftware.com" + "/oauth2/login/callback/" + args[:provider]
-    end
   end
 end

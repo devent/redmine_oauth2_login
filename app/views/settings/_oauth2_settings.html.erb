@@ -16,6 +16,10 @@
         :selected => @settings['provider']) %>
   </p>
   <p>
+    <label>Redmine URL:</label>
+    <%= text_field_tag 'settings[redmine_uri]', @settings['redmine_uri'] %>
+  </p>
+  <p>
     <label>OAuth Authorization Code URL:</label>
     <%= text_field_tag 'settings[authorization_uri]', @settings['authorization_uri'] %>
   </p>
