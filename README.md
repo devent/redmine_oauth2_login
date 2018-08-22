@@ -16,7 +16,7 @@ Version of [Redmine](http://www.redmine.org/): 3.4.X (as of publish date, other 
 
 ```console
 cd /path/to/redmine
-git clone -b master https://github.com/gpstogis/redmine_oauth2_login.git ./plugins/redmine_oauth2_login
+git clone -b master https://github.com/devent/redmine_oauth2_login.git ./plugins/redmine_oauth2_login
 rm -rf ./plugins/redmine_oauth2_login/.git ./plugins/redmine_oauth2_login/test
 bundle install --without development test
 ```

@@ -4,12 +4,12 @@ require_dependency 'redmine_oauth2_login/account_controller_patch'
 
 Redmine::Plugin.register :redmine_oauth2_login do
   name 'OAuth login plugin'
-  author 'goldcastle@hotmail.com'
+  author 'erwin@muellerpublic.de'
   description 'This is a plugin for Redmine authentication with OAuth (Such As GitHub)'
-  url 'https://github.com/gpstogis/redmine-oauth-login'
+  url 'https://github.com/gpstogis/redmine_oauth2_login'
   author_url 'http://www.gpstogis.com'
-  version '1.0.0'
-  requires_redmine :version_or_higher => '3.0.0'
+  version '2.0.0'
+  requires_redmine :version_or_higher => '3.4.0'
 
   settings :default => {
     :client_id => "",

@@ -84,7 +84,6 @@ module AccountControllerPatch
         puts "Code: " + code
         conn = Faraday.new(:url => oauth2_get_access_token_uri) do |faraday|
           faraday.request :url_encoded
-          faraday.response :logger
           faraday.adapter Faraday.default_adapter
         end
         data = {
@@ -98,8 +97,6 @@ module AccountControllerPatch
           req.headers['Content-Type'] = 'application/x-www-form-urlencoded'
           req.body = URI.encode_www_form(data)
         end
-        puts response.inspect
-        puts "response: #{response.body or 'nil'}"
         if "github".casecmp(params[:provider]) == 0
           token = CGI.parse(response.body)['access_token'][0].to_s
         else # oauth2
@@ -116,9 +113,6 @@ module AccountControllerPatch
           req.url oauth2_get_user_info_uri
         end
         # Profile parse
-        puts "Profile parse"
-        puts response.inspect
-        puts "response: #{response.body or 'nil'}"
         userDetails = JSON.parse(response.body)
 
         # if "github".casecmp(params[:provider]) == 0
