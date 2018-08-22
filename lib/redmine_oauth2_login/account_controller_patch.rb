@@ -82,7 +82,7 @@ module AccountControllerPatch
         # Access token
         code = params[:code]
         puts "Code: " + code
-        conn = Faraday::Faraday.new(:url => oauth2_get_access_token_uri) do |faraday|
+        conn = Faraday.new(:url => oauth2_get_access_token_uri) do |faraday|
           faraday.request :url_encoded
           faraday.response :logger
           faraday.adapter Faraday.default_adapter
