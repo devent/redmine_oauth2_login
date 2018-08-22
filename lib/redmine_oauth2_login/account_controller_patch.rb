@@ -111,8 +111,8 @@ module AccountControllerPatch
           redirect_to adminsignin_path and return
         end
         response = conn.get do |req|
-          req.headers['Content-Type'] = 'content-type: application/json'
-          req.headers['authorization'] = "Bearer " + token
+          req.headers['Content-Type'] = 'application/json'
+          req.headers['Authorization'] = "Bearer " + token
           req.url oauth2_get_user_info_uri
         end
         # Profile parse
