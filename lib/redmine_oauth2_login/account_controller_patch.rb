@@ -87,16 +87,18 @@ module AccountControllerPatch
           faraday.response :logger
           faraday.adapter Faraday.default_adapter
         end
+        data = {
+          :grant_type => "authorization_code",
+          :client_id => oauth2_get_client_id,
+          :client_secret => oauth2_get_client_secret,
+          :code => code,
+          :redirect_uri => oauth2_login_callback_url_1(:provider => params[:provider])
+        }
         response = conn.post do |req|
-          req.headers['Content-Type'] = 'application/json'
-          req.body = '{ '\
-              '"grant_type": "authorization_code",'\
-              '"client_id": "' + oauth2_get_client_id + '",'\
-              '"client_secret": "' + oauth2_get_client_secret + '",'\
-              '"code": "' + code + '",'\
-              '"redirect_uri": "' + oauth2_login_callback_url_1(:provider => params[:provider]) + '",'\
-              '}'
+          req.headers['Content-Type'] = 'application/x-www-form-urlencoded'
+          req.body = URI.encode_www_form(data)
         end
+        puts response.inspect
         puts "response: #{response.body or 'nil'}"
         if "github".casecmp(params[:provider]) == 0
           token = CGI.parse(response.body)['access_token'][0].to_s
