@@ -81,6 +81,7 @@ module AccountControllerPatch
       else
         # Access token
         code = params[:code]
+        flash[:error] = "Code: " + code
         connection = Faraday::Connection.new #oauth2_settings["access_token_uri"].gsub(/\/+$/, '')#, :ssl => {:verify => false} # comment :ssl part is your certificate is OK
         response = connection.post do |req|
           req.url oauth2_settings["access_token_uri"].gsub(/\/+$/, '')
@@ -95,6 +96,7 @@ module AccountControllerPatch
         else # oauth2
           token = JSON.parse(response.body)['access_token']
         end
+        flash[:error] = "Token: " + token
         if token.blank?
           # logger.info("#{oauth2_settings['access_token_uri']} return #{response.body}")
           flash[:error] = l(:notice_unable_to_obtain_oauth2_access_token)
