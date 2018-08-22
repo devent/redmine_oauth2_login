@@ -88,11 +88,14 @@ module AccountControllerPatch
           faraday.adapter Faraday.default_adapter
         end
         response = conn.post do |req|
-          req.params["grant_type"] = "authorization_code"
-          req.params["client_id"] = oauth2_get_client_id
-          req.params["client_secret"] = oauth2_get_client_secret
-          req.params["code"] = code
-          req.params["redirect_uri"] = oauth2_login_callback_url_1(:provider => params[:provider])
+          req.headers['Content-Type'] = 'application/json'
+          req.body = '{ '\
+              '"grant_type": "authorization_code",'\
+              '"client_id": "' + oauth2_get_client_id + '",'\
+              '"client_secret": "' + oauth2_get_client_secret + '",'\
+              '"code": "' + code + '",'\
+              '"redirect_uri": "' + oauth2_login_callback_url_1(:provider => params[:provider]) + '",'\
+              '}'
         end
         puts "response: #{response.body or 'nil'}"
         if "github".casecmp(params[:provider]) == 0
