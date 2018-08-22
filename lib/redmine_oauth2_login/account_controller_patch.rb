@@ -110,16 +110,20 @@ module AccountControllerPatch
           flash[:error] = l(:notice_unable_to_obtain_oauth2_access_token)
           redirect_to adminsignin_path and return
         end
-        userInfoUri = oauth2_get_user_info_uri + "?access_token=#{token}"
         response = conn.get do |req|
-          req.url userInfoUri
+          req.headers['Content-Type'] = 'content-type: application/json'
+          req.headers['authorization'] = "Bearer " + token
+          req.url oauth2_get_user_info_uri
         end
         # Profile parse
+        puts "Profile parse"
+        puts response.inspect
+        puts "response: #{response.body or 'nil'}"
         userDetails = JSON.parse(response.body)
 
         # if "github".casecmp(params[:provider]) == 0
         # Login
-        if userDetails && userDetails["id"]
+        if userDetails && userDetails["preferred_username"]
           extract_user_details userDetails
         else
           # logger.info("#{userInfoUri} return #{response.body}")
@@ -242,7 +246,7 @@ module AccountControllerPatch
 
     private
     def oauth2_username(userDetails)
-      for key in ["username", "login", "user", "name"] do
+      for key in ["preferred_username", "username", "login", "user", "name"] do
         if userDetails[key].present?
           return userDetails[key]
         end
@@ -251,7 +255,7 @@ module AccountControllerPatch
 
     private
     def oauth2_firstname(userDetails)
-      for key in ["firstname", "fullname", "name", "username", "login", "user"] do
+      for key in ["given_name", "firstname", "fullname", "name", "username", "login", "user"] do
         if userDetails[key].present?
           return userDetails[key]
         end
@@ -261,7 +265,7 @@ module AccountControllerPatch
 
     private
     def oauth2_lastname(userDetails)
-      for key in ["lastname"] do
+      for key in ["family_name", "lastname"] do
         if userDetails[key].present?
           return userDetails[key]
         end
@@ -271,7 +275,7 @@ module AccountControllerPatch
 
     private
     def oauth2_email(userDetails)
-      for key in ["email", "fullname", "name", "username", "login", "user"] do
+      for key in ["email"] do
         if userDetails[key].present?
           return userDetails[key]
         end
