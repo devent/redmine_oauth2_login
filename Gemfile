@@ -1,4 +1,4 @@
 source 'https://rubygems.org'
 
 gem 'json'
-gem 'faraday'
+gem 'faraday', '0.15.2'

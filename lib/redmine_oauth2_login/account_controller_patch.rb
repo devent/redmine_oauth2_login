@@ -11,7 +11,7 @@ module AccountControllerPatch
   module InstanceMethods
 
     def login_with_oauth2
-      if request.get? && oauth2_settings["enabled"] && oauth2_settings["replace_redmine_login"]
+      if request.get? && oauth2_is_enabled && oauth2_is_replace_redmine_login
         if params.has_key?("admin")
           replaceRedmineLogin = "false".casecmp(params[:admin]) == 0
         elsif session[:using_redmine_login]
@@ -21,7 +21,7 @@ module AccountControllerPatch
         end
       end
       if replaceRedmineLogin
-        redirect_to :controller => "account", :action => "oauth2_login", :provider => oauth2_settings["provider"], :origin => back_url and return
+        redirect_to :controller => "account", :action => "oauth2_login", :provider => oauth2_get_provider, :origin => back_url and return
       else
         login_without_oauth2
       end
@@ -30,7 +30,7 @@ module AccountControllerPatch
     def logout_with_oauth2
       if oauth2_settings["enabled"]
         logout_user
-        redirect_to oauth2_settings["user_logout_uri"].gsub(/\/+$/, '')+"?targetUrl="+home_url and return
+        redirect_to oauth2_get_user_logout_uri + "?targetUrl=" + home_url and return
       else
         logout_without_oauth2
       end
@@ -48,14 +48,14 @@ module AccountControllerPatch
         session[:back_url] = params[:back_url]
         redirect_uri = oauth2_login_callback_url_1(:provider => params[:provider])
         hash = {:response_type => "code",
-                :client_id => oauth2_settings["client_id"],
+                :client_id => oauth2_get_client_id,
                 :redirect_uri => redirect_uri}
         param_arr = []
         hash.each do |key , val|
           param_arr << "#{key}=#{val}"
         end
         params_str = param_arr.join("&")
-        redirect_to oauth2_settings["authorization_uri"].gsub(/\/+$/, '') + "?#{params_str}" and return
+        redirect_to oauth2_get_authorization_uri + "?#{params_str}" and return
       else
         password_authentication
       end
@@ -64,7 +64,7 @@ module AccountControllerPatch
     def oauth2_login_failure
       error = params[:message] || 'unknown'
       error = 'error_oauth2_login_' + error
-      if oauth2_settings["replace_redmine_login"]
+      if oauth2_is_replace_redmine_login
         render_error({:message => error.to_sym, :status => 500})
         return false
       else
@@ -82,12 +82,15 @@ module AccountControllerPatch
         # Access token
         code = params[:code]
         puts "Code: " + code
-        connection = Faraday::Connection.new #oauth2_settings["access_token_uri"].gsub(/\/+$/, '')#, :ssl => {:verify => false} # comment :ssl part is your certificate is OK
-        response = connection.post do |req|
-          req.url oauth2_settings["access_token_uri"].gsub(/\/+$/, '')
+        conn = Faraday::Faraday.new(:url => oauth2_get_access_token_uri) do |faraday|
+          faraday.request :url_encoded
+          faraday.response :logger
+          faraday.adapter Faraday.default_adapter
+        end
+        response = conn.post do |req|
           req.params["grant_type"] = "authorization_code"
-          req.params["client_id"] = oauth2_settings["client_id"]
-          req.params["client_secret"] = oauth2_settings["client_secret"]
+          req.params["client_id"] = oauth2_get_client_id
+          req.params["client_secret"] = oauth2_get_client_secret
           req.params["code"] = code
           req.params["redirect_uri"] = oauth2_login_callback_url_1(:provider => params[:provider])
         end
@@ -102,8 +105,8 @@ module AccountControllerPatch
           flash[:error] = l(:notice_unable_to_obtain_oauth2_access_token)
           redirect_to adminsignin_path and return
         end
-        userInfoUri = oauth2_settings["user_info_uri"].gsub(/\/+$/, '') + "?access_token=#{token}"
-        response = connection.get do |req|
+        userInfoUri = oauth2_get_user_info_uri + "?access_token=#{token}"
+        response = conn.get do |req|
           req.url userInfoUri
         end
         # Profile parse
@@ -185,6 +188,51 @@ module AccountControllerPatch
         flash[:error] = l(:notice_oauth_account_denied)
         redirect_to adminsignin_path and return
       end
+    end
+    
+    private
+    def oauth2_is_enabled()
+      return oauth2_settings["enabled"].gsub(/\/+$/, '')
+    end
+
+    private
+    def oauth2_is_replace_redmine_login()
+      return oauth2_settings["replace_redmine_login"]
+    end
+
+    private
+    def oauth2_get_provider()
+      return oauth2_settings["provider"]
+    end
+
+    private
+    def oauth2_get_client_id()
+      return oauth2_settings["client_id"]
+    end
+
+    private
+    def oauth2_get_client_secret()
+      return oauth2_settings["client_secret"]
+    end
+
+    private
+    def oauth2_get_access_token_uri()
+      return oauth2_settings["access_token_uri"].gsub(/\/+$/, '')
+    end
+
+    private
+    def oauth2_get_authorization_uri()
+      return oauth2_settings["authorization_uri"].gsub(/\/+$/, '')
+    end
+
+    private
+    def oauth2_get_user_logout_uri()
+      return oauth2_settings["user_logout_uri"].gsub(/\/+$/, '')
+    end
+
+    private
+    def oauth2_get_user_info_uri()
+      return oauth2_settings["user_info_uri"].gsub(/\/+$/, '')
     end
 
     private
