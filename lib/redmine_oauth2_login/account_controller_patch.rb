@@ -90,7 +90,7 @@ module AccountControllerPatch
           req.params["client_secret"] = oauth2_settings["client_secret"]
           req.params["code"] = code
           req.params["redirect_uri"] = oauth2_login_callback_url_1(:provider => params[:provider])
-          puts "params: " + req.params
+          puts req.params
         end
         puts "response: #{response.body or 'nil'}"
         if "github".casecmp(params[:provider]) == 0
