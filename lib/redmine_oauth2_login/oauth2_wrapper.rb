@@ -6,7 +6,6 @@ module RedmineOauth2Login
     
     def initialize(args)
       @settings = args[:settings]
-      puts @settings
     end
 
     def login_redirect()
@@ -66,11 +65,11 @@ module RedmineOauth2Login
     end
 
     def logout_uri()
-      return user_logout_uri + "?targetUrl=" + redmine_url
+      return user_logout_uri + "?targetUrl=" + redmine_uri
     end
 
-    def redmine_url()
-      return @settings["redmine_url"]
+    def redmine_uri()
+      return @settings["redmine_uri"]
     end
 
     def provider()
@@ -102,7 +101,7 @@ module RedmineOauth2Login
     end
 
     def login_callback_url()
-      return redmine_url + "/oauth2/login/callback/" + provider
+      return redmine_uri + "/oauth2/login/callback/" + provider
     end
 
   end
