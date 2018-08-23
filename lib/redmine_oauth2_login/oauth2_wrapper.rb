@@ -6,6 +6,7 @@ module RedmineOauth2Login
     
     def initialize(args)
       @settings = args[:settings]
+      puts @settings
     end
 
     def login_redirect()
