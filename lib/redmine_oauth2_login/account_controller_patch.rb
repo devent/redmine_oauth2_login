@@ -107,21 +107,29 @@ module AccountControllerPatch
       params[:back_url] = session[:back_url]
       session.delete(:back_url)
       if oauth2_is_user_auto_create
-        user = User.where(:login => user.username).first_or_create
-        if user.new_record?
-          user.login = user.username
-          new_user user, userProfile
-        else
-          exist_user user
-        end
+        oauth2_with_user_auto_create(userProfile)
       else
-        user = User.where(:login => username).first
-        if user
-          exist_user user
-        else 
-          flash[:error] = l(:notice_user_access_denied)
-          redirect_to adminsignin_path and return
-        end
+        oauth2_without_user_auto_create(userProfile)
+      end
+    end
+    
+    def oauth2_with_user_auto_create(userProfile)
+      user = User.where(:login => userProfile.username).first_or_create
+      if user.new_record?
+        user.login = userProfile.username
+        new_user user, userProfile
+      else
+        exist_user user
+      end
+    end
+
+    def oauth2_without_user_auto_create(userProfile)
+      user = User.where(:login => userProfile.username).first
+      if user
+        exist_user user
+      else 
+        flash[:error] = l(:notice_user_access_denied)
+        redirect_to adminsignin_path and return
       end
     end
 
