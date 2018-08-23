@@ -32,7 +32,7 @@ module AccountControllerPatch
       wrapper = RedmineOauth2Login::Oauth2Wrapper.new({ :settings => oauth2_settings })
       if wrapper.is_enabled
         logout_user
-        redirect_to wrapper.logout_uri(home_url) and return
+        redirect_to wrapper.logout_uri() and return
       else
         logout_without_oauth2
       end

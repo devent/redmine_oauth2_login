@@ -64,8 +64,8 @@ module RedmineOauth2Login
       return @settings["replace_redmine_login"]
     end
 
-    def logout_uri(homeUrl)
-      return user_logout_uri + "?targetUrl=" + homeUrl
+    def logout_uri()
+      return user_logout_uri + "?targetUrl=" + redmine_url
     end
 
     def redmine_url()
