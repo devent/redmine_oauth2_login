@@ -52,7 +52,7 @@ module RedmineOauth2Login
         req.headers['Content-Type'] = 'application/json'
         req.headers['Authorization'] = "Bearer " + token
       end
-      user = Oauth2UserProfile.new({ :profile => JSON.parse(response.body) })
+      user = RedmineOauth2Login::Oauth2UserProfile.new({ :profile => JSON.parse(response.body) })
       return user
     end
     
