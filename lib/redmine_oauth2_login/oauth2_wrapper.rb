@@ -2,12 +2,12 @@ module RedmineOauth2Login
 
   class Oauth2Wrapper
     
-    @setting = nil
+    @settings = nil
     
     def initialize(args)
-      @settings = args.settings
+      @settings = args[:settings]
     end
-    
+
     def login_redirect()
       hash = {:response_type => "code",
               :client_id => client_id,
@@ -45,17 +45,19 @@ module RedmineOauth2Login
     end
     
     def userProfile(token)
+      conn = Faraday.new(:url => user_info_uri) do |faraday|
+        faraday.adapter Faraday.default_adapter
+      end
       response = conn.get do |req|
         req.headers['Content-Type'] = 'application/json'
         req.headers['Authorization'] = "Bearer " + token
-        req.url user_info_uri
       end
       user = Oauth2UserProfile.new({ :profile => JSON.parse(response.body) })
       return user
     end
     
     def is_enabled()
-      return @settings["enabled"].gsub(/\/+$/, '')
+      return @settings["enabled"]
     end
 
     def is_replace_redmine_login()
@@ -96,10 +98,6 @@ module RedmineOauth2Login
 
     def user_info_uri()
       return @settings["user_info_uri"].gsub(/\/+$/, '')
-    end
-
-    def callback_url(provider)
-      return login_url.gsub(/\/+$/, '') + "/callback/" + provider
     end
 
     def login_callback_url()

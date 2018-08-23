@@ -5,7 +5,7 @@ module RedmineOauth2Login
     @profile = nil
     
     def initialize(args)
-      @profile = args.profile
+      @profile = args[:profile]
     end
     
     def username()
