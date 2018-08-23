@@ -2,6 +2,8 @@ module RedmineOauth2Login
 
   class Oauth2Wrapper
     
+    @setting = nil
+    
     def initialize(args)
       @settings = args.settings
     end
@@ -42,14 +44,14 @@ module RedmineOauth2Login
       return token
     end
     
-    def profile(token)
+    def userProfile(token)
       response = conn.get do |req|
         req.headers['Content-Type'] = 'application/json'
         req.headers['Authorization'] = "Bearer " + token
         req.url user_info_uri
       end
-      profile = JSON.parse(response.body)
-      return profile
+      user = Oauth2UserProfile.new({ :profile => JSON.parse(response.body) })
+      return user
     end
     
     def is_enabled()
@@ -96,41 +98,6 @@ module RedmineOauth2Login
       return @settings["user_info_uri"].gsub(/\/+$/, '')
     end
 
-    def username(userDetails)
-      for key in ["preferred_username", "username", "login", "user", "name"] do
-        if userDetails[key].present?
-          return userDetails[key]
-        end
-      end
-    end
-
-    def firstname(userDetails)
-      for key in ["given_name", "firstname", "fullname", "name", "username", "login", "user"] do
-        if userDetails[key].present?
-          return userDetails[key]
-        end
-      end
-      return username(userDetails)
-    end
-
-    def lastname(userDetails)
-      for key in ["family_name", "lastname"] do
-        if userDetails[key].present?
-          return userDetails[key]
-        end
-      end
-      return "OAuth2User"
-    end
-
-    def email(userDetails)
-      for key in ["email"] do
-        if userDetails[key].present?
-          return userDetails[key]
-        end
-      end
-      return username(userDetails) + "@email.error"
-    end
-
     def callback_url(provider)
       return login_url.gsub(/\/+$/, '') + "/callback/" + provider
     end
@@ -139,9 +106,6 @@ module RedmineOauth2Login
       return redmine_url + "/oauth2/login/callback/" + provider
     end
 
-    private
-    def @settings
-      Setting.plugin_redmine_oauth2_login
-    end
-    
   end
+
+end

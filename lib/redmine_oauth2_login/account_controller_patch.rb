@@ -11,7 +11,7 @@ module AccountControllerPatch
   module InstanceMethods
 
     def login_with_oauth2
-      wrapper = RedmineOauth2Login::Oauth2Wrapper.new(oauth2_settings)
+      wrapper = RedmineOauth2Login::Oauth2Wrapper.new({ :settings => oauth2_settings })
       if request.get? && wrapper.is_enabled && wrapper.is_replace_redmine_login
         if params.has_key?("admin")
           replaceRedmineLogin = "false".casecmp(params[:admin]) == 0
@@ -29,7 +29,7 @@ module AccountControllerPatch
     end
 
     def logout_with_oauth2
-      wrapper = RedmineOauth2Login::Oauth2Wrapper.new(oauth2_settings)
+      wrapper = RedmineOauth2Login::Oauth2Wrapper.new({ :settings => oauth2_settings })
       if wrapper.is_enabled
         logout_user
         redirect_to oauth2_get_user_logout_uri + "?targetUrl=" + home_url and return
@@ -46,7 +46,7 @@ module AccountControllerPatch
 
     # login
     def oauth2_login
-      wrapper = RedmineOauth2Login::Oauth2Wrapper.new(oauth2_settings)
+      wrapper = RedmineOauth2Login::Oauth2Wrapper.new({ :settings => oauth2_settings })
       if wrapper.is_enabled
         session[:back_url] = params[:back_url]
         redirect_to wrapper.login_redirect and return
@@ -56,7 +56,7 @@ module AccountControllerPatch
     end
 
     def oauth2_login_failure
-      wrapper = RedmineOauth2Login::Oauth2Wrapper.new(oauth2_settings)
+      wrapper = RedmineOauth2Login::Oauth2Wrapper.new({ :settings => oauth2_settings })
       error = params[:message] || 'unknown'
       error = 'error_oauth2_login_' + error
       if wrapper.is_replace_redmine_login
@@ -74,7 +74,7 @@ module AccountControllerPatch
         flash[:error] = l(:notice_access_denied)
         redirect_to adminsignin_path and return
       else
-        wrapper = RedmineOauth2Login::Oauth2Wrapper.new(oauth2_settings)
+        wrapper = RedmineOauth2Login::Oauth2Wrapper.new({ :settings => oauth2_settings })
         # Access token
         code = params[:code]
         token = wrapper.token(code)
@@ -83,12 +83,12 @@ module AccountControllerPatch
           flash[:error] = l(:notice_unable_to_obtain_oauth2_access_token)
           redirect_to adminsignin_path and return
         end
-        profile = wrapper.profile(token)
+        userProfile = wrapper.userProfile(token)
 
         # if "github".casecmp(params[:provider]) == 0
         # Login
-        if userDetails && userDetails["preferred_username"]
-          extract_user_details userDetails
+        if userProfile.username
+          oauth2_user(userProfile)
         else
           # logger.info("#{userInfoUri} return #{response.body}")
           flash[:error] = l(:notice_unable_to_obtain_oauth2_credentials)
@@ -99,19 +99,18 @@ module AccountControllerPatch
     end
 
     # Login
-    def extract_user_details(userDetails)
-      username = oauth2_username userDetails
-      if username.blank?
+    def oauth2_user(userProfile)
+      if userProfile.username.blank?
         redirect_to adminsignin_path and return
         return
       end
       params[:back_url] = session[:back_url]
       session.delete(:back_url)
-      if oauth2_settings["user_auto_create"]
-        user = User.where(:login => username).first_or_create
+      if oauth2_is_user_auto_create
+        user = User.where(:login => user.username).first_or_create
         if user.new_record?
-          user.login = username
-          new_user user, userDetails
+          user.login = user.username
+          new_user user, userProfile
         else
           exist_user user
         end
@@ -143,11 +142,11 @@ module AccountControllerPatch
     end
 
     # Add new user
-    def new_user(user, userDetails)
+    def new_user(user, userProfile)
       # Create on the fly
-      user.firstname = oauth2_firstname userDetails
-      user.lastname = oauth2_lastname userDetails
-      user.mail = oauth2_email userDetails
+      user.firstname = userProfile.firstname
+      user.lastname = userProfile.lastname
+      user.mail = userProfile.mail
       user.random_password
       user.register
       # Here is some really dirty coding, because we override Redmine registration policies
@@ -166,6 +165,11 @@ module AccountControllerPatch
     private
     def oauth2_settings
       Setting.plugin_redmine_oauth2_login
+    end
+    
+    private
+    def oauth2_is_user_auto_create
+      oauth2_settings["user_auto_create"]
     end
     
   end
