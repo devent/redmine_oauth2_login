@@ -26,6 +26,6 @@ Redmine::Plugin.register :redmine_oauth2_login do
   }, :partial => 'settings/oauth2_settings'
 
   Rails.configuration.to_prepare do
-    AccountController.send(:include, AccountControllerPatch)
+    RedmineOauth2Login.setup
   end
 end

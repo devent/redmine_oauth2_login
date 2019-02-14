@@ -149,6 +149,6 @@ module RedmineOauth2Login
       return username() + "@email.error"
     end
 
-  end
+  end # Oauth2Wrapper
 
-end
+end # RedmineOauth2Login
