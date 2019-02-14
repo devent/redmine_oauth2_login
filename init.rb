@@ -1,6 +1,4 @@
-require 'redmine'
-require_dependency 'redmine_oauth2_login/hooks'
-require_dependency 'redmine_oauth2_login/account_controller_patch'
+require_dependency 'redmine_oauth2_login'
 
 Redmine::Plugin.register :redmine_oauth2_login do
   name 'OAuth login plugin'
