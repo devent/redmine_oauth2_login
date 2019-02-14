@@ -1,16 +1,11 @@
 module AccountControllerPatch
   def self.included(base)
-    base.send(:include, InstanceMethods)
-    base.class_eval do
-      unloadable
-      alias_method_chain :login, :oauth2
-      alias_method_chain :logout, :oauth2
-    end
+    base.send(:prepend, InstanceMethods)
   end
 
   module InstanceMethods
 
-    def login_with_oauth2
+    def login
       wrapper = RedmineOauth2Login::Oauth2Wrapper.new({ :settings => oauth2_settings })
       if request.get? && wrapper.is_enabled && wrapper.is_replace_redmine_login
         if params.has_key?("admin")
@@ -28,7 +23,7 @@ module AccountControllerPatch
       end
     end
 
-    def logout_with_oauth2
+    def logout
       wrapper = RedmineOauth2Login::Oauth2Wrapper.new({ :settings => oauth2_settings })
       if wrapper.is_enabled
         logout_user
