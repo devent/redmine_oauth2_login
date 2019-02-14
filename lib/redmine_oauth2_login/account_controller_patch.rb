@@ -11,7 +11,7 @@ module RedmineOauth2Login
     module InstanceMethods
 
       def login
-        wrapper = RedmineOauth2Login::Oauth2Wrapper.new({ :settings => oauth2_settings })
+        wrapper = Oauth2Wrapper.new({ :settings => oauth2_settings })
         if request.get? && wrapper.is_enabled && wrapper.is_replace_redmine_login
           if params.has_key?("admin")
             replaceRedmineLogin = "false".casecmp(params[:admin]) == 0
@@ -29,7 +29,7 @@ module RedmineOauth2Login
       end
 
       def logout
-        wrapper = RedmineOauth2Login::Oauth2Wrapper.new({ :settings => oauth2_settings })
+        wrapper = Oauth2Wrapper.new({ :settings => oauth2_settings })
         if wrapper.is_enabled
           logout_user
           redirect_to wrapper.logout_uri() and return
@@ -46,7 +46,7 @@ module RedmineOauth2Login
 
       # login
       def oauth2_login
-        wrapper = RedmineOauth2Login::Oauth2Wrapper.new({ :settings => oauth2_settings })
+        wrapper = Oauth2Wrapper.new({ :settings => oauth2_settings })
         if wrapper.is_enabled
           session[:back_url] = params[:back_url]
           redirect_to wrapper.login_redirect and return
@@ -56,7 +56,7 @@ module RedmineOauth2Login
       end
 
       def oauth2_login_failure
-        wrapper = RedmineOauth2Login::Oauth2Wrapper.new({ :settings => oauth2_settings })
+        wrapper = Oauth2Wrapper.new({ :settings => oauth2_settings })
         error = params[:message] || 'unknown'
         error = 'error_oauth2_login_' + error
         if wrapper.is_replace_redmine_login
@@ -74,7 +74,7 @@ module RedmineOauth2Login
           flash[:error] = l(:notice_access_denied)
           redirect_to adminsignin_path and return
         else
-          wrapper = RedmineOauth2Login::Oauth2Wrapper.new({ :settings => oauth2_settings })
+          wrapper = Oauth2Wrapper.new({ :settings => oauth2_settings })
           # Access token
           code = params[:code]
           token = wrapper.token(code)
