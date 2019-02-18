@@ -34,7 +34,7 @@ module RedmineOauth2Login
       return "OAuth2User"
     end
 
-    def email()
+    def mail()
       for key in ["email"] do
         if @profile[key].present?
           return @profile[key]

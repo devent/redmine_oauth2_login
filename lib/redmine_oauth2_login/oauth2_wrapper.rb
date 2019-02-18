@@ -1,3 +1,5 @@
+require_dependency 'redmine_oauth2_login/oauth2_userprofile'
+
 module RedmineOauth2Login
 
   class Oauth2Wrapper
@@ -6,6 +8,7 @@ module RedmineOauth2Login
     
     def initialize(args)
       @settings = args[:settings]
+      @logger = Rails.logger
     end
 
     def login_redirect()
@@ -52,6 +55,8 @@ module RedmineOauth2Login
         req.headers['Content-Type'] = 'application/json'
         req.headers['Authorization'] = "Bearer " + token
       end
+      
+      @logger.debug "response.body: " + response.body
       user = Oauth2UserProfile.new({ :profile => JSON.parse(response.body) })
       return user
     end
