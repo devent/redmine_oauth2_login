@@ -1,6 +1,6 @@
 module RedmineOauth2Login
 
-  def setup
+  def self.setup
     RedmineOauth2Login::AccountControllerPatch.apply
   end
 

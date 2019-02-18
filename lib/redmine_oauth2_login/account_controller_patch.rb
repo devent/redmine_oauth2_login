@@ -1,3 +1,5 @@
+require_dependency 'redmine_oauth2_login/oauth2_wrapper'
+
 module RedmineOauth2Login
 
   module AccountControllerPatch
@@ -24,7 +26,7 @@ module RedmineOauth2Login
         if replaceRedmineLogin
           redirect_to :controller => "account", :action => "oauth2_login", :provider => wrapper.provider, :origin => back_url and return
         else
-          login_without_oauth2
+          super
         end
       end
 
@@ -34,7 +36,7 @@ module RedmineOauth2Login
           logout_user
           redirect_to wrapper.logout_uri() and return
         else
-          logout_without_oauth2
+          super
         end
       end
 

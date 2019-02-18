@@ -52,7 +52,7 @@ module RedmineOauth2Login
         req.headers['Content-Type'] = 'application/json'
         req.headers['Authorization'] = "Bearer " + token
       end
-      user = RedmineOauth2Login::Oauth2UserProfile.new({ :profile => JSON.parse(response.body) })
+      user = Oauth2UserProfile.new({ :profile => JSON.parse(response.body) })
       return user
     end
     
@@ -102,51 +102,6 @@ module RedmineOauth2Login
 
     def login_callback_url()
       return redmine_uri + "/oauth2/login/callback/" + provider
-    end
-
-  end
-
-  class Oauth2UserProfile
-    
-    @profile = nil
-    
-    def initialize(args)
-      @profile = args[:profile]
-    end
-    
-    def username()
-      for key in ["preferred_username", "username", "login", "user", "name"] do
-        if @profile[key].present?
-          return @profile[key]
-        end
-      end
-    end
-    
-    def firstname()
-      for key in ["given_name", "firstname", "fullname", "name", "username", "login", "user"] do
-        if @profile[key].present?
-          return @profile[key]
-        end
-      end
-      return username()
-    end
-
-    def lastname()
-      for key in ["family_name", "lastname"] do
-        if @profile[key].present?
-          return @profile[key]
-        end
-      end
-      return "OAuth2User"
-    end
-
-    def email()
-      for key in ["email"] do
-        if @profile[key].present?
-          return @profile[key]
-        end
-      end
-      return username() + "@email.error"
     end
 
   end # Oauth2Wrapper
